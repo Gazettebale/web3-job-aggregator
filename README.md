@@ -42,7 +42,7 @@ Un outil Python pour agréger et rechercher des offres d'emploi Web3/Crypto à p
 
 1. Clone ce repository :
 ```bash
-git clone https://github.com/TON-USERNAME/web3-job-aggregator.git
+git clone https://github.com/Gazettebale/web3-job-aggregator.git
 cd web3-job-aggregator
 ```
 

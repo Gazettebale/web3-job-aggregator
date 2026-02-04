@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Job Aggregator - Find Your Next Crypto Role</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Web3 Job Aggregator</h1>
+            <p class="subtitle">Search 13+ job boards in one place</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="keywords" 
+                    placeholder="Enter keywords: solidity, remote, developer..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" onclick="searchJobs()">
+                    <span class="btn-text">Search Jobs</span>
+                    <span class="btn-loading" style="display:none;">Searching...</span>
+                </button>
+            </div>
+            <div class="quick-filters">
+                <button class="filter-tag" onclick="setKeyword('solidity, remote')">Solidity</button>
+                <button class="filter-tag" onclick="setKeyword('rust, developer')">Rust</button>
+                <button class="filter-tag" onclick="setKeyword('defi, protocol')">DeFi</button>
+                <button class="filter-tag" onclick="setKeyword('smart contract')">Smart Contracts</button>
+                <button class="filter-tag" onclick="setKeyword('remote')">Remote</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>Scanning job boards...</p>
+        </div>
+
+        <div id="results" class="results" style="display:none;">
+            <div class="results-header">
+                <h2>Found <span id="jobCount">0</span> jobs</h2>
+                <button onclick="exportResults()" class="export-btn">Export JSON</button>
+            </div>
+            <div id="jobsList" class="jobs-list"></div>
+        </div>
+
+        <div id="empty" class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Ready to find your Web3 job?</h3>
+            <p>Enter keywords or click a filter to start searching</p>
+        </div>
+
+        <footer>
+            <p>Aggregating from 13 job boards | Open Source on <a href="https://github.com/TON-USERNAME/web3-job-aggregator" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

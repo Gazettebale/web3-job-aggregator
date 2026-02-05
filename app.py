@@ -16,9 +16,10 @@ def search_jobs():
         data = request.get_json()
         keywords = data.get('keywords', [])
         
-        # Create aggregator and search
+        # Create aggregator and search with MORE results per site
         aggregator = Web3JobAggregator()
-        jobs = aggregator.search_all(keywords=keywords if keywords else None, max_jobs_per_site=30)
+        # Increase max_jobs_per_site to get WAY more results
+        jobs = aggregator.search_all(keywords=keywords if keywords else None, max_jobs_per_site=100)
         
         return jsonify({
             'success': True,

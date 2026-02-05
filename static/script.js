@@ -1,8 +1,8 @@
 let currentJobs = [];
 let selectedKeywords = new Set();
+let searchInterval = null;
 
 function toggleKeyword(keyword) {
-    // Toggle keyword selection
     if (selectedKeywords.has(keyword)) {
         selectedKeywords.delete(keyword);
     } else {
@@ -35,7 +35,6 @@ function updateSelectedDisplay() {
         tagsContainer.appendChild(tag);
     });
     
-    // Update button states
     document.querySelectorAll('.filter-tag').forEach(btn => {
         const keyword = btn.textContent.trim();
         if (selectedKeywords.has(keyword)) {
@@ -86,8 +85,12 @@ async function searchJobs() {
     document.querySelector('.btn-text').style.display = 'none';
     document.querySelector('.btn-loading').style.display = 'inline';
     
+    // Update loading message
+    document.querySelector('.loading p').textContent = 'Starting search across 13 job boards...';
+    
     try {
-        const response = await fetch('/api/search', {
+        // Start the search
+        const startResponse = await fetch('/api/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -95,26 +98,68 @@ async function searchJobs() {
             body: JSON.stringify({ keywords: keywordArray })
         });
         
-        const data = await response.json();
+        const startData = await startResponse.json();
         
-        if (data.success) {
-            currentJobs = data.jobs;
-            displayJobs(data.jobs);
+        if (startData.success && startData.search_id) {
+            // Poll for results
+            pollResults(startData.search_id);
         } else {
-            alert('Error: ' + data.error);
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('empty').style.display = 'block';
+            throw new Error(startData.error || 'Failed to start search');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to fetch jobs. Please try again.');
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('empty').style.display = 'block';
-    } finally {
-        document.getElementById('searchBtn').disabled = false;
-        document.querySelector('.btn-text').style.display = 'inline';
-        document.querySelector('.btn-loading').style.display = 'none';
+        alert('Failed to start search. Please try again.');
+        resetUI();
     }
+}
+
+function pollResults(searchId) {
+    let attempts = 0;
+    const maxAttempts = 120; // 2 minutes max (120 * 1 second)
+    
+    searchInterval = setInterval(async () => {
+        attempts++;
+        
+        // Update loading message with dots
+        const dots = '.'.repeat((attempts % 4));
+        document.querySelector('.loading p').textContent = `Scanning job boards${dots} (${attempts}s)`;
+        
+        try {
+            const response = await fetch(`/api/search/${searchId}`);
+            const data = await response.json();
+            
+            if (data.status === 'completed') {
+                clearInterval(searchInterval);
+                currentJobs = data.jobs;
+                displayJobs(data.jobs);
+                resetUI();
+            } else if (data.status === 'error') {
+                clearInterval(searchInterval);
+                alert('Error: ' + (data.error || 'Unknown error'));
+                resetUI();
+                document.getElementById('empty').style.display = 'block';
+            } else if (attempts >= maxAttempts) {
+                clearInterval(searchInterval);
+                alert('Search is taking too long. Please try again with fewer keywords.');
+                resetUI();
+                document.getElementById('empty').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+            if (attempts >= 5) { // Give up after 5 failed attempts
+                clearInterval(searchInterval);
+                alert('Failed to fetch results. Please try again.');
+                resetUI();
+                document.getElementById('empty').style.display = 'block';
+            }
+        }
+    }, 1000); // Poll every second
+}
+
+function resetUI() {
+    document.getElementById('searchBtn').disabled = false;
+    document.querySelector('.btn-text').style.display = 'inline';
+    document.querySelector('.btn-loading').style.display = 'none';
 }
 
 function displayJobs(jobs) {
@@ -195,4 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
             searchJobs();
         }
     });
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (searchInterval) {
+        clearInterval(searchInterval);
+    }
 });

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Web3 Job Aggregator - Optimized for real job boards
-Scrapes multiple Web3/crypto job boards and aggregates results
+Web3 Job Aggregator - Optimized with site-specific scrapers
 """
 
 import requests
@@ -23,7 +22,6 @@ class Web3JobAggregator:
             'Accept-Language': 'en-US,en;q=0.5',
         }
         
-        # Job boards configuration
         self.job_boards = {
             'crypto-careers': {
                 'name': 'Crypto Careers',
@@ -92,16 +90,10 @@ class Web3JobAggregator:
             }
         }
     
-    def search_all(self, keywords: Optional[List[str]] = None, max_jobs_per_site: int = 50):
-        """
-        Search all enabled job boards
-        
-        Args:
-            keywords: List of keywords to filter (e.g., ['solidity', 'remote'])
-            max_jobs_per_site: Maximum jobs to fetch per site
-        """
+    def search_all(self, keywords: Optional[List[str]] = None, max_jobs_per_site: int = 200):
+        """Search all enabled job boards with MAXIMUM results"""
         print("\n" + "="*80)
-        print("🚀 WEB3 JOB AGGREGATOR")
+        print("🚀 WEB3 JOB AGGREGATOR - MAXIMUM MODE")
         print("="*80)
         
         if keywords:
@@ -117,11 +109,17 @@ class Web3JobAggregator:
             sys.stdout.flush()
             
             try:
-                jobs = self._scrape_generic(
-                    board_info['url'], 
-                    board_info['name'],
-                    max_jobs=max_jobs_per_site
-                )
+                # Use specialized scraper if available
+                scraper_method = getattr(self, f'_scrape_{board_id.replace("-", "_")}', None)
+                
+                if scraper_method:
+                    jobs = scraper_method(max_jobs=max_jobs_per_site)
+                else:
+                    jobs = self._scrape_generic(
+                        board_info['url'], 
+                        board_info['name'],
+                        max_jobs=max_jobs_per_site
+                    )
                 
                 if keywords:
                     jobs = self._filter_by_keywords(jobs, keywords)
@@ -129,13 +127,11 @@ class Web3JobAggregator:
                 self.jobs.extend(jobs)
                 print(f"✅ {len(jobs)} jobs")
                 
-                # Be respectful - wait between requests
                 time.sleep(1)
                 
             except Exception as e:
                 print(f"❌ Error: {str(e)[:50]}")
         
-        # Remove duplicates based on URL
         self._deduplicate_jobs()
         
         print(f"\n{'='*80}")
@@ -144,102 +140,198 @@ class Web3JobAggregator:
         
         return self.jobs
     
-    def _scrape_generic(self, url: str, source: str, max_jobs: int = 50) -> List[Dict]:
-        """
-        Generic scraper that works for most job boards
-        """
+    def _scrape_web3_career(self, max_jobs: int = 200) -> List[Dict]:
+        """Specialized scraper for web3.career"""
+        jobs = []
+        try:
+            # Try multiple pages
+            for page in range(1, 6):  # Pages 1-5
+                url = f'https://web3.career/?page={page}' if page > 1 else 'https://web3.career/'
+                response = requests.get(url, headers=self.headers, timeout=15)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Find job cards - web3.career uses table rows
+                job_rows = soup.find_all('tr', class_='table_row')
+                
+                for row in job_rows[:max_jobs]:
+                    try:
+                        title_elem = row.find('h2', class_='fs-6')
+                        company_elem = row.find('h3', class_='fs-6')
+                        location_elem = row.find('p', class_='job-location-salary')
+                        link_elem = row.find('a', href=True)
+                        
+                        if title_elem and link_elem:
+                            job = {
+                                'title': title_elem.get_text(strip=True),
+                                'company': company_elem.get_text(strip=True) if company_elem else '',
+                                'location': location_elem.get_text(strip=True) if location_elem else '',
+                                'url': urljoin('https://web3.career', link_elem['href']),
+                                'source': 'Web3 Career',
+                                'scraped_at': datetime.now().isoformat()
+                            }
+                            jobs.append(job)
+                    except:
+                        continue
+                
+                if len(job_rows) == 0:
+                    break
+                    
+        except Exception as e:
+            print(f"Error in web3.career: {e}")
+        
+        return jobs
+    
+    def _scrape_cryptocurrencyjobs(self, max_jobs: int = 200) -> List[Dict]:
+        """Specialized scraper for cryptocurrencyjobs.co"""
+        jobs = []
+        try:
+            for page in range(1, 6):
+                url = f'https://cryptocurrencyjobs.co/jobs/?page={page}' if page > 1 else 'https://cryptocurrencyjobs.co/jobs/'
+                response = requests.get(url, headers=self.headers, timeout=15)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                job_cards = soup.find_all('div', class_='job-list-item') or soup.find_all('article')
+                
+                for card in job_cards[:max_jobs]:
+                    try:
+                        title_elem = card.find(['h2', 'h3', 'a'])
+                        company_elem = card.find(class_=re.compile('company', re.I))
+                        location_elem = card.find(class_=re.compile('location', re.I))
+                        link_elem = card.find('a', href=True)
+                        
+                        if title_elem:
+                            job = {
+                                'title': title_elem.get_text(strip=True),
+                                'company': company_elem.get_text(strip=True) if company_elem else '',
+                                'location': location_elem.get_text(strip=True) if location_elem else '',
+                                'url': link_elem['href'] if link_elem else '',
+                                'source': 'Cryptocurrency Jobs',
+                                'scraped_at': datetime.now().isoformat()
+                            }
+                            if job['title']:
+                                jobs.append(job)
+                    except:
+                        continue
+                
+                if len(job_cards) == 0:
+                    break
+                    
+        except Exception as e:
+            print(f"Error in cryptocurrencyjobs: {e}")
+        
+        return jobs
+    
+    def _scrape_generic(self, url: str, source: str, max_jobs: int = 200) -> List[Dict]:
+        """Enhanced generic scraper with better detection"""
         jobs = []
         
         try:
-            response = requests.get(url, headers=self.headers, timeout=15)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Common selectors for job listings
-            selectors = [
-                {'name': 'article'},
-                {'name': 'div', 'class': re.compile(r'job.*card|listing|position', re.I)},
-                {'name': 'tr', 'class': re.compile(r'job|row', re.I)},
-                {'name': 'li', 'class': re.compile(r'job|listing', re.I)},
-                {'name': 'a', 'class': re.compile(r'job.*link|listing', re.I)},
-            ]
-            
-            job_elements = []
-            for selector in selectors:
-                found = soup.find_all(**selector, limit=max_jobs)
-                if len(found) > 5:  # If we found a reasonable number, use these
-                    job_elements = found
+            # Try multiple pages
+            for page_num in range(1, 4):
+                page_url = url
+                if page_num > 1:
+                    # Try common pagination patterns
+                    for pattern in [f'?page={page_num}', f'/page/{page_num}', f'?p={page_num}']:
+                        test_url = url.rstrip('/') + pattern
+                        try:
+                            test_response = requests.head(test_url, headers=self.headers, timeout=5)
+                            if test_response.status_code == 200:
+                                page_url = test_url
+                                break
+                        except:
+                            continue
+                
+                response = requests.get(page_url, headers=self.headers, timeout=15)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Try multiple selectors
+                job_elements = []
+                
+                selectors = [
+                    {'name': 'article'},
+                    {'name': 'div', 'class': re.compile(r'job.*item|job.*card|job.*listing|position.*item', re.I)},
+                    {'name': 'tr', 'class': re.compile(r'job|position|listing', re.I)},
+                    {'name': 'li', 'class': re.compile(r'job|listing|position', re.I)},
+                    {'name': 'div', 'attrs': {'data-testid': re.compile(r'job', re.I)}},
+                ]
+                
+                for selector in selectors:
+                    found = soup.find_all(**selector, limit=max_jobs)
+                    if len(found) > 3:
+                        job_elements = found
+                        break
+                
+                # Fallback to all links if nothing found
+                if not job_elements:
+                    job_elements = soup.find_all('a', href=True, limit=max_jobs)
+                
+                page_jobs = 0
+                for element in job_elements[:max_jobs]:
+                    try:
+                        job_data = self._extract_job_data(element, url, source)
+                        if job_data and job_data.get('title') and len(job_data['title']) > 3:
+                            jobs.append(job_data)
+                            page_jobs += 1
+                    except:
+                        continue
+                
+                # Stop if no jobs found on this page
+                if page_jobs == 0:
                     break
-            
-            # Fallback: find all links that might be jobs
-            if not job_elements:
-                job_elements = soup.find_all('a', href=True, limit=max_jobs)
-            
-            for element in job_elements[:max_jobs]:
-                try:
-                    job_data = self._extract_job_data(element, url, source)
-                    if job_data and job_data.get('title'):
-                        jobs.append(job_data)
-                except Exception:
-                    continue
                     
         except Exception as e:
-            raise Exception(f"Failed to scrape {source}: {str(e)}")
+            pass
         
         return jobs
     
     def _extract_job_data(self, element, base_url: str, source: str) -> Optional[Dict]:
-        """
-        Extract job data from an HTML element
-        """
-        # Try to find title
+        """Enhanced job data extraction"""
+        # Title extraction
         title = ''
-        for tag in ['h1', 'h2', 'h3', 'h4', 'a', 'span', 'div']:
-            title_elem = element.find(tag, class_=re.compile(r'title|position|role|job.*name', re.I))
+        for selector in [
+            ('class', re.compile(r'title|job.*name|position', re.I)),
+            ('name', ['h1', 'h2', 'h3', 'h4']),
+        ]:
+            if selector[0] == 'class':
+                title_elem = element.find(['h1', 'h2', 'h3', 'h4', 'a', 'span'], class_=selector[1])
+            else:
+                title_elem = element.find(selector[1])
+            
             if title_elem:
                 title = title_elem.get_text(strip=True)
                 break
         
-        # If no title with class, try first heading or link
         if not title:
-            for tag in ['h2', 'h3', 'a']:
-                elem = element.find(tag)
-                if elem:
-                    title = elem.get_text(strip=True)
-                    break
+            title_elem = element.find('a')
+            if title_elem:
+                title = title_elem.get_text(strip=True)
         
-        # Skip if title is too short or generic
-        if not title or len(title) < 3 or title.lower() in ['jobs', 'careers', 'apply', 'more']:
+        # Skip invalid titles
+        if not title or len(title) < 3:
             return None
         
-        # Extract company
+        skip_words = ['jobs', 'careers', 'apply', 'more', 'view all', 'see all', 'load more']
+        if title.lower() in skip_words:
+            return None
+        
+        # Company extraction
         company = ''
-        for selector in [
-            {'class': re.compile(r'company|employer|organization', re.I)},
-            {'class': re.compile(r'subtitle', re.I)},
-        ]:
-            company_elem = element.find(['span', 'div', 'p', 'h3', 'h4'], **selector)
-            if company_elem:
-                company = company_elem.get_text(strip=True)
-                break
+        company_elem = element.find(['span', 'div', 'p', 'h3', 'h4'], class_=re.compile(r'company|employer|organization', re.I))
+        if company_elem:
+            company = company_elem.get_text(strip=True)
         
-        # Extract location
+        # Location extraction
         location = ''
-        for selector in [
-            {'class': re.compile(r'location|remote|place|geo', re.I)},
-        ]:
-            loc_elem = element.find(['span', 'div', 'p'], **selector)
-            if loc_elem:
-                location = loc_elem.get_text(strip=True)
-                break
+        location_elem = element.find(['span', 'div', 'p'], class_=re.compile(r'location|remote|place|geo', re.I))
+        if location_elem:
+            location = location_elem.get_text(strip=True)
         
-        # Check for "remote" in text if no location found
-        if not location:
-            text = element.get_text().lower()
-            if 'remote' in text:
-                location = 'Remote'
+        # Check for remote in text
+        if not location and 'remote' in element.get_text().lower():
+            location = 'Remote'
         
-        # Extract URL
+        # URL extraction
         job_url = ''
         link = element.find('a', href=True)
         if link:
@@ -264,9 +356,7 @@ class Web3JobAggregator:
         }
     
     def _filter_by_keywords(self, jobs: List[Dict], keywords: List[str]) -> List[Dict]:
-        """
-        Filter jobs by keywords (case-insensitive)
-        """
+        """Filter jobs by keywords (case-insensitive)"""
         if not keywords:
             return jobs
         
@@ -274,32 +364,32 @@ class Web3JobAggregator:
         keywords_lower = [k.lower() for k in keywords]
         
         for job in jobs:
-            # Combine all searchable text
             searchable_text = ' '.join([
                 job.get('title', ''),
                 job.get('company', ''),
                 job.get('location', '')
             ]).lower()
             
-            # Check if any keyword matches
             if any(keyword in searchable_text for keyword in keywords_lower):
                 filtered.append(job)
         
         return filtered
     
     def _deduplicate_jobs(self):
-        """
-        Remove duplicate jobs based on URL
-        """
-        seen_urls = set()
+        """Remove duplicate jobs based on URL and title"""
+        seen = set()
         unique_jobs = []
         
         for job in self.jobs:
-            url = job.get('url', '')
-            if url and url not in seen_urls:
-                seen_urls.add(url)
-                unique_jobs.append(job)
-            elif not url:  # Keep jobs without URL
+            # Create identifier from URL or title+company
+            identifier = job.get('url', '')
+            if not identifier:
+                identifier = f"{job.get('title', '')}|{job.get('company', '')}"
+            
+            identifier = identifier.lower().strip()
+            
+            if identifier and identifier not in seen:
+                seen.add(identifier)
                 unique_jobs.append(job)
         
         original_count = len(self.jobs)
@@ -325,7 +415,6 @@ class Web3JobAggregator:
             f.write(f"**Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write(f"**Total Jobs:** {len(self.jobs)}\n\n")
             
-            # Group by source
             jobs_by_source = {}
             for job in self.jobs:
                 source = job.get('source', 'Unknown')
@@ -336,7 +425,6 @@ class Web3JobAggregator:
             f.write(f"**Sources:** {len(jobs_by_source)} job boards\n\n")
             f.write("---\n\n")
             
-            # Write jobs grouped by source
             for source, jobs in sorted(jobs_by_source.items()):
                 f.write(f"## 📍 {source} ({len(jobs)} jobs)\n\n")
                 
@@ -381,15 +469,13 @@ def main():
     """Main execution"""
     print("""
     ╔════════════════════════════════════════════╗
-    ║     🚀 Web3 Job Aggregator v2.0           ║
-    ║     Find your next crypto/Web3 role       ║
+    ║     🚀 Web3 Job Aggregator v3.0           ║
+    ║     MAXIMUM MODE - All jobs included      ║
     ╚════════════════════════════════════════════╝
     """)
     
-    # Create aggregator
     aggregator = Web3JobAggregator()
     
-    # Get user input for keywords
     print("🔍 Enter keywords to filter jobs (comma-separated)")
     print("   Examples: solidity, rust, remote, developer, defi")
     print("   Or press Enter to see ALL jobs\n")
@@ -401,15 +487,12 @@ def main():
         keywords = [k.strip() for k in user_input.split(',') if k.strip()]
         print(f"\n✅ Filtering by: {', '.join(keywords)}")
     
-    # Search jobs
-    print("\n" + "⏳ Starting search...\n")
-    jobs = aggregator.search_all(keywords=keywords)
+    print("\n" + "⏳ Starting MAXIMUM search (this will take 60-90 seconds)...\n")
+    jobs = aggregator.search_all(keywords=keywords, max_jobs_per_site=200)
     
     if jobs:
-        # Display sample
         aggregator.display(limit=15)
         
-        # Ask if user wants to save
         print("💾 Save results?")
         print("   1. JSON only")
         print("   2. Markdown only")

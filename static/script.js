@@ -1,13 +1,82 @@
 let currentJobs = [];
+let selectedKeywords = new Set();
 
-function setKeyword(keyword) {
-    document.getElementById('keywords').value = keyword;
-    searchJobs();
+function toggleKeyword(keyword) {
+    // Toggle keyword selection
+    if (selectedKeywords.has(keyword)) {
+        selectedKeywords.delete(keyword);
+    } else {
+        selectedKeywords.add(keyword);
+    }
+    
+    updateSelectedDisplay();
+    updateKeywordInput();
+}
+
+function updateSelectedDisplay() {
+    const container = document.getElementById('selectedKeywords');
+    const tagsContainer = document.getElementById('selectedTags');
+    
+    if (selectedKeywords.size === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    tagsContainer.innerHTML = '';
+    
+    selectedKeywords.forEach(keyword => {
+        const tag = document.createElement('span');
+        tag.className = 'selected-tag';
+        tag.innerHTML = `
+            ${keyword}
+            <button onclick="removeKeyword('${keyword}')" class="remove-tag">×</button>
+        `;
+        tagsContainer.appendChild(tag);
+    });
+    
+    // Update button states
+    document.querySelectorAll('.filter-tag').forEach(btn => {
+        const keyword = btn.textContent.trim();
+        if (selectedKeywords.has(keyword)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function updateKeywordInput() {
+    const input = document.getElementById('keywords');
+    if (selectedKeywords.size > 0) {
+        input.value = Array.from(selectedKeywords).join(', ');
+    } else {
+        input.value = '';
+    }
+}
+
+function removeKeyword(keyword) {
+    selectedKeywords.delete(keyword);
+    updateSelectedDisplay();
+    updateKeywordInput();
+}
+
+function clearKeywords() {
+    selectedKeywords.clear();
+    updateSelectedDisplay();
+    updateKeywordInput();
+    document.querySelectorAll('.filter-tag').forEach(btn => {
+        btn.classList.remove('active');
+    });
 }
 
 async function searchJobs() {
-    const keywords = document.getElementById('keywords').value.trim();
-    const keywordArray = keywords ? keywords.split(',').map(k => k.trim()).filter(k => k) : [];
+    if (selectedKeywords.size === 0) {
+        alert('Please select at least one keyword');
+        return;
+    }
+    
+    const keywordArray = Array.from(selectedKeywords);
     
     // UI updates
     document.getElementById('loading').style.display = 'block';
@@ -57,7 +126,7 @@ function displayJobs(jobs) {
     jobsList.innerHTML = '';
     
     if (jobs.length === 0) {
-        jobsList.innerHTML = '<p style="text-align:center; color: var(--text-dim);">No jobs found. Try different keywords.</p>';
+        jobsList.innerHTML = '<p style="text-align:center; color: var(--text-dim); padding: 3rem;">No jobs found. Try different keywords or fewer filters.</p>';
         return;
     }
     
@@ -106,6 +175,7 @@ function exportResults() {
     const dataStr = JSON.stringify({
         total: currentJobs.length,
         timestamp: new Date().toISOString(),
+        keywords: Array.from(selectedKeywords),
         jobs: currentJobs
     }, null, 2);
     

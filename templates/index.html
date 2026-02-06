@@ -1,16 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web3 Job Aggregator - Find Your Next Crypto Role</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>{{ t.title }} - {{ t.subtitle }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="lang-switcher">
+        <a href="/?lang=en" class="{% if lang == 'en' %}active{% endif %}">EN</a>
+        <a href="/?lang=fr" class="{% if lang == 'fr' %}active{% endif %}">FR</a>
+    </div>
+
     <div class="container">
         <header>
-            <h1>🚀 Web3 Job Aggregator</h1>
-            <p class="subtitle">Search 13+ job boards in one place</p>
+            <div class="header-badge">90+ companies via API · {{ t.api_powered }}</div>
+            <h1>{{ t.title }}</h1>
+            <p class="subtitle">{{ t.subtitle }}</p>
         </header>
 
         <div class="search-section">
@@ -18,127 +25,149 @@
                 <input 
                     type="text" 
                     id="keywords" 
-                    placeholder="Click tags below or type keywords: solidity, remote, developer..."
-                    autocomplete="off"
+                    placeholder="{{ t.select_keywords }}..."
                     readonly
                 >
-                <button id="searchBtn" onclick="searchJobs()">
-                    <span class="btn-text">Search Jobs</span>
-                    <span class="btn-loading" style="display:none;">Searching...</span>
+                <button id="searchBtn" onclick="searchJobs(false)">
+                    <span class="btn-text">{{ t.search }}</span>
+                    <span class="btn-loading" style="display:none;">{{ t.searching }}</span>
+                </button>
+                <button id="searchAllBtn" class="search-all-btn" onclick="searchJobs(true)">
+                    {{ t.search_all }}
                 </button>
             </div>
             
             <div class="selected-keywords" id="selectedKeywords" style="display:none;">
-                <span class="selected-label">Selected:</span>
+                <span class="selected-label">{{ t.selected }}</span>
                 <div id="selectedTags"></div>
-                <button class="clear-btn" onclick="clearKeywords()">Clear All</button>
+                <button class="clear-btn" onclick="clearKeywords()">{{ t.clear_all }}</button>
             </div>
 
-            <div class="keywords-section">
-                <h3>👨‍💻 Job Roles</h3>
-                <div class="quick-filters">
-                    <button class="filter-tag" onclick="toggleKeyword('developer')">Developer</button>
-                    <button class="filter-tag" onclick="toggleKeyword('engineer')">Engineer</button>
-                    <button class="filter-tag" onclick="toggleKeyword('frontend')">Frontend</button>
-                    <button class="filter-tag" onclick="toggleKeyword('backend')">Backend</button>
-                    <button class="filter-tag" onclick="toggleKeyword('full stack')">Full Stack</button>
-                    <button class="filter-tag" onclick="toggleKeyword('smart contract')">Smart Contract</button>
-                    <button class="filter-tag" onclick="toggleKeyword('product manager')">Product Manager</button>
-                    <button class="filter-tag" onclick="toggleKeyword('designer')">Designer</button>
-                    <button class="filter-tag" onclick="toggleKeyword('marketing')">Marketing</button>
-                    <button class="filter-tag" onclick="toggleKeyword('community')">Community</button>
-                    <button class="filter-tag" onclick="toggleKeyword('researcher')">Researcher</button>
-                    <button class="filter-tag" onclick="toggleKeyword('analyst')">Analyst</button>
-                    <button class="filter-tag" onclick="toggleKeyword('auditor')">Auditor</button>
-                    <button class="filter-tag" onclick="toggleKeyword('devops')">DevOps</button>
-                    <button class="filter-tag" onclick="toggleKeyword('security')">Security</button>
+            <div class="keywords-grid">
+                <div class="keyword-category">
+                    <h3>👨‍💻 Roles</h3>
+                    <div class="keyword-tags">
+                        <button class="tag" onclick="toggleKeyword('developer')">Developer</button>
+                        <button class="tag" onclick="toggleKeyword('engineer')">Engineer</button>
+                        <button class="tag" onclick="toggleKeyword('marketing')">Marketing</button>
+                        <button class="tag" onclick="toggleKeyword('designer')">Designer</button>
+                        <button class="tag" onclick="toggleKeyword('product')">Product</button>
+                        <button class="tag" onclick="toggleKeyword('community')">Community</button>
+                        <button class="tag" onclick="toggleKeyword('sales')">Sales</button>
+                        <button class="tag" onclick="toggleKeyword('analyst')">Analyst</button>
+                        <button class="tag" onclick="toggleKeyword('researcher')">Researcher</button>
+                        <button class="tag" onclick="toggleKeyword('manager')">Manager</button>
+                        <button class="tag" onclick="toggleKeyword('data')">Data</button>
+                        <button class="tag" onclick="toggleKeyword('security')">Security</button>
+                    </div>
                 </div>
 
-                <h3>⚙️ Technologies</h3>
-                <div class="quick-filters">
-                    <button class="filter-tag" onclick="toggleKeyword('solidity')">Solidity</button>
-                    <button class="filter-tag" onclick="toggleKeyword('rust')">Rust</button>
-                    <button class="filter-tag" onclick="toggleKeyword('move')">Move</button>
-                    <button class="filter-tag" onclick="toggleKeyword('cairo')">Cairo</button>
-                    <button class="filter-tag" onclick="toggleKeyword('vyper')">Vyper</button>
-                    <button class="filter-tag" onclick="toggleKeyword('javascript')">JavaScript</button>
-                    <button class="filter-tag" onclick="toggleKeyword('typescript')">TypeScript</button>
-                    <button class="filter-tag" onclick="toggleKeyword('react')">React</button>
-                    <button class="filter-tag" onclick="toggleKeyword('python')">Python</button>
-                    <button class="filter-tag" onclick="toggleKeyword('go')">Go</button>
-                    <button class="filter-tag" onclick="toggleKeyword('web3.js')">Web3.js</button>
-                    <button class="filter-tag" onclick="toggleKeyword('ethers.js')">Ethers.js</button>
+                <div class="keyword-category">
+                    <h3>⚙️ Tech</h3>
+                    <div class="keyword-tags">
+                        <button class="tag" onclick="toggleKeyword('solidity')">Solidity</button>
+                        <button class="tag" onclick="toggleKeyword('rust')">Rust</button>
+                        <button class="tag" onclick="toggleKeyword('javascript')">JavaScript</button>
+                        <button class="tag" onclick="toggleKeyword('python')">Python</button>
+                        <button class="tag" onclick="toggleKeyword('react')">React</button>
+                        <button class="tag" onclick="toggleKeyword('typescript')">TypeScript</button>
+                        <button class="tag" onclick="toggleKeyword('go')">Go</button>
+                        <button class="tag" onclick="toggleKeyword('node')">Node.js</button>
+                        <button class="tag" onclick="toggleKeyword('smart contract')">Smart Contracts</button>
+                        <button class="tag" onclick="toggleKeyword('zero knowledge')">ZK</button>
+                    </div>
                 </div>
 
-                <h3>🌐 Blockchain Ecosystems</h3>
-                <div class="quick-filters">
-                    <button class="filter-tag" onclick="toggleKeyword('ethereum')">Ethereum</button>
-                    <button class="filter-tag" onclick="toggleKeyword('solana')">Solana</button>
-                    <button class="filter-tag" onclick="toggleKeyword('avalanche')">Avalanche</button>
-                    <button class="filter-tag" onclick="toggleKeyword('polygon')">Polygon</button>
-                    <button class="filter-tag" onclick="toggleKeyword('arbitrum')">Arbitrum</button>
-                    <button class="filter-tag" onclick="toggleKeyword('optimism')">Optimism</button>
-                    <button class="filter-tag" onclick="toggleKeyword('base')">Base</button>
-                    <button class="filter-tag" onclick="toggleKeyword('cosmos')">Cosmos</button>
-                    <button class="filter-tag" onclick="toggleKeyword('polkadot')">Polkadot</button>
-                    <button class="filter-tag" onclick="toggleKeyword('near')">Near</button>
-                    <button class="filter-tag" onclick="toggleKeyword('cardano')">Cardano</button>
-                    <button class="filter-tag" onclick="toggleKeyword('sui')">Sui</button>
-                    <button class="filter-tag" onclick="toggleKeyword('aptos')">Aptos</button>
+                <div class="keyword-category">
+                    <h3>🌐 Chains</h3>
+                    <div class="keyword-tags">
+                        <button class="tag" onclick="toggleKeyword('ethereum')">Ethereum</button>
+                        <button class="tag" onclick="toggleKeyword('solana')">Solana</button>
+                        <button class="tag" onclick="toggleKeyword('polygon')">Polygon</button>
+                        <button class="tag" onclick="toggleKeyword('avalanche')">Avalanche</button>
+                        <button class="tag" onclick="toggleKeyword('arbitrum')">Arbitrum</button>
+                        <button class="tag" onclick="toggleKeyword('optimism')">Optimism</button>
+                        <button class="tag" onclick="toggleKeyword('base')">Base</button>
+                        <button class="tag" onclick="toggleKeyword('cosmos')">Cosmos</button>
+                        <button class="tag" onclick="toggleKeyword('sui')">Sui</button>
+                        <button class="tag" onclick="toggleKeyword('aptos')">Aptos</button>
+                    </div>
                 </div>
 
-                <h3>💰 DeFi & Applications</h3>
-                <div class="quick-filters">
-                    <button class="filter-tag" onclick="toggleKeyword('defi')">DeFi</button>
-                    <button class="filter-tag" onclick="toggleKeyword('dex')">DEX</button>
-                    <button class="filter-tag" onclick="toggleKeyword('lending')">Lending</button>
-                    <button class="filter-tag" onclick="toggleKeyword('staking')">Staking</button>
-                    <button class="filter-tag" onclick="toggleKeyword('nft')">NFT</button>
-                    <button class="filter-tag" onclick="toggleKeyword('gaming')">Gaming</button>
-                    <button class="filter-tag" onclick="toggleKeyword('metaverse')">Metaverse</button>
-                    <button class="filter-tag" onclick="toggleKeyword('dao')">DAO</button>
-                    <button class="filter-tag" onclick="toggleKeyword('layer 2')">Layer 2</button>
-                    <button class="filter-tag" onclick="toggleKeyword('zk')">Zero Knowledge</button>
-                    <button class="filter-tag" onclick="toggleKeyword('bridge')">Bridge</button>
-                    <button class="filter-tag" onclick="toggleKeyword('wallet')">Wallet</button>
+                <div class="keyword-category">
+                    <h3>💰 Sectors</h3>
+                    <div class="keyword-tags">
+                        <button class="tag" onclick="toggleKeyword('defi')">DeFi</button>
+                        <button class="tag" onclick="toggleKeyword('nft')">NFT</button>
+                        <button class="tag" onclick="toggleKeyword('dao')">DAO</button>
+                        <button class="tag" onclick="toggleKeyword('gaming')">Gaming</button>
+                        <button class="tag" onclick="toggleKeyword('infrastructure')">Infrastructure</button>
+                        <button class="tag" onclick="toggleKeyword('exchange')">Exchange</button>
+                        <button class="tag" onclick="toggleKeyword('wallet')">Wallet</button>
+                        <button class="tag" onclick="toggleKeyword('layer 2')">Layer 2</button>
+                        <button class="tag" onclick="toggleKeyword('ai')">AI</button>
+                        <button class="tag" onclick="toggleKeyword('staking')">Staking</button>
+                    </div>
                 </div>
 
-                <h3>📍 Location & Level</h3>
-                <div class="quick-filters">
-                    <button class="filter-tag" onclick="toggleKeyword('remote')">Remote</button>
-                    <button class="filter-tag" onclick="toggleKeyword('senior')">Senior</button>
-                    <button class="filter-tag" onclick="toggleKeyword('junior')">Junior</button>
-                    <button class="filter-tag" onclick="toggleKeyword('lead')">Lead</button>
-                    <button class="filter-tag" onclick="toggleKeyword('principal')">Principal</button>
-                    <button class="filter-tag" onclick="toggleKeyword('intern')">Intern</button>
+                <div class="keyword-category">
+                    <h3>📍 Other</h3>
+                    <div class="keyword-tags">
+                        <button class="tag" onclick="toggleKeyword('remote')">Remote</button>
+                        <button class="tag" onclick="toggleKeyword('senior')">Senior</button>
+                        <button class="tag" onclick="toggleKeyword('junior')">Junior</button>
+                        <button class="tag" onclick="toggleKeyword('intern')">Intern</button>
+                        <button class="tag" onclick="toggleKeyword('contract')">Contract</button>
+                        <button class="tag" onclick="toggleKeyword('full-time')">Full-time</button>
+                        <button class="tag" onclick="toggleKeyword('part-time')">Part-time</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="loading" class="loading" style="display:none;">
             <div class="spinner"></div>
-            <p>Scanning job boards... This may take 30-60 seconds</p>
+            <p id="loadingText">{{ t.loading }}</p>
+            <p class="loading-sub">Greenhouse API · Lever API · Web3 Job Boards</p>
         </div>
 
         <div id="results" class="results" style="display:none;">
             <div class="results-header">
-                <h2>Found <span id="jobCount">0</span> jobs</h2>
-                <button onclick="exportResults()" class="export-btn">Export JSON</button>
+                <div class="results-info">
+                    <h2><span id="jobCount">0</span> {{ t.jobs_found }}</h2>
+                    <div id="sourceStats" class="source-stats"></div>
+                </div>
+                <div class="results-actions">
+                    <button onclick="exportResults()" class="export-btn">📥 {{ t.export }}</button>
+                </div>
             </div>
-            <div id="jobsList" class="jobs-list"></div>
+            <div id="jobsList" class="jobs-grid"></div>
         </div>
 
         <div id="empty" class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <h3>Ready to find your Web3 job?</h3>
-            <p>Click keywords above to start searching across 13 job boards</p>
+            <div class="empty-icon">🚀</div>
+            <h3>{{ t.ready }}</h3>
+            <p>{{ t.click_to_start }}</p>
+            <div class="source-logos">
+                <span class="source-badge api">Greenhouse API</span>
+                <span class="source-badge api">Lever API</span>
+                <span class="source-badge">Web3.career</span>
+                <span class="source-badge">CryptoJobsList</span>
+                <span class="source-badge">Remote3</span>
+                <span class="source-badge">+10 more</span>
+            </div>
         </div>
 
         <footer>
-            <p>Aggregating from 13 job boards | Open Source on <a href="https://github.com/Gazettebale/web3-job-aggregator" target="_blank">GitHub</a></p>
+            <p>{{ t.footer }}</p>
+            <p>{{ t.powered_by }} <a href="https://twitter.com/_Gazettebale" target="_blank">@_Gazettebale</a> · <a href="https://github.com/Gazettebale/web3-jobs-pro" target="_blank">GitHub</a></p>
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        const lang = '{{ lang }}';
+        const translations = {{ t | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

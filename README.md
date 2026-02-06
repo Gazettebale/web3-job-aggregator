@@ -1,234 +1,163 @@
-# 🚀 Web3 Job Aggregator
+# 🚀 Web3 Jobs Pro
 
-[![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/TON-USERNAME/web3-job-aggregator/graphs/commit-activity)
+**Professional Web3/Crypto job aggregator with real APIs and optimized scraping**
 
-Un outil Python pour agréger et rechercher des offres d'emploi Web3/Crypto à partir de **13 job boards** en un seul endroit.
+Find thousands of Web3 jobs from multiple sources in one beautiful interface.
 
-## 📋 Fonctionnalités
+## ✨ Features
 
-- ✅ Scraping automatique de 13 job boards Web3
-- 🔍 Recherche par mots-clés (remote, solidity, developer, etc.)
-- 💾 Export en JSON et Markdown
-- 🎯 Centralisation de toutes les offres au même endroit
-- 🧹 Déduplication automatique des offres
-- 📊 Groupement par source
-- 🔄 Facilement extensible avec de nouveaux sites
+- 🎯 **Real APIs** - Greenhouse & Lever JSON APIs (no auth needed!) + optimized scraping
+- 🌍 **Multi-language** - English & French support
+- 🎨 **Modern UI** - Cyberpunk-inspired design with smooth animations
+- ⚡ **Parallel Fetch** - All sources scanned simultaneously for speed
+- 📱 **Responsive** - Works on all devices
+- 🔍 **Smart Filters** - 50+ keyword categories (roles, tech, chains, sectors)
+- 💾 **Export** - Download results as JSON
+- 🔄 **Deduplication** - Smart duplicate detection across sources
 
-## 🌐 Job Boards Intégrés (13)
+## 📊 Data Sources (15+)
 
-1. **Crypto Careers** - https://www.crypto-careers.com/
-2. **Web3 Career** - https://web3.career/
-3. **Cryptocurrency Jobs** - https://cryptocurrencyjobs.co/
-4. **Crypto Jobs List** - https://cryptojobslist.com/
-5. **BeInCrypto Jobs** - https://beincrypto.com/jobs/
-6. **JobStash** - https://jobstash.xyz/jobs
-7. **Remote3** - https://www.remote3.co/
-8. **Midnight Network** - https://midnight.network/careers
-9. **Dragonfly** - https://jobs.dragonfly.xyz/jobs
-10. **Block** - https://block.xyz/careers/jobs
-11. **Solana Jobs** - https://jobs.solana.com/jobs
-12. **Avalanche Jobs** - https://jobs.avax.network/jobs
-13. **Ethereum Job Board** - https://www.ethereumjobboard.com/jobs
+### 🟢 API-Powered (Reliable, structured JSON)
 
-## 🛠️ Installation
+**Greenhouse Job Board API** (54 companies, public, no auth):
+- Coinbase, Kraken, Blockchain.com, Robinhood, Fireblocks, Chainalysis
+- Ledger, BitGo, Circle, Paxos, Anchorage Digital, Figment
+- Uniswap Labs, Paradigm, ConsenSys, OpenSea, dYdX, Compound, Aave
+- Arbitrum, Optimism, Celestia, EigenLayer, StarkWare, Immutable
+- Sui/Mysten Labs, Aptos Labs, ZetaChain, Startale (Astar)
+- Galaxy Digital, Gauntlet, Polychain Capital, Multicoin, Pantera Capital
+- Wormhole, Eco Protocol, Nethermind, Biconomy, Nansen, Messari
+- Dune Analytics, LayerZero, Axelar, Rarible, and more...
 
-### Prérequis
-- Python 3.7+
-- pip
+**Lever Postings API** (36 companies, public, no auth):
+- Crypto.com, Binance, Animoca Brands, CertiK
+- Polygon, Chainlink, Offchain Labs, Arbitrum Foundation
+- Ethereum Foundation, Solana Foundation, Aztec, zkSync, Nibiru
+- Alchemy, QuickNode, The Graph, Tenderly, Phantom, WalletConnect
+- Worldcoin, Wintermute, Flow Traders, Token Metrics
+- Mythical Games, Sky Mavis (Axie), The Sandbox
+- Protocol Labs, Filecoin, Livepeer, Kadena, LUKSO, POAP, and more...
 
-### Étapes d'installation
+**Web3.career API** (optional, needs free API key):
+- Sign up at [web3.career/web3-jobs-api](https://web3.career/web3-jobs-api)
+- Set `WEB3CAREER_API_KEY` env variable
+- 27,000+ jobs database, hourly updates
 
-1. Clone ce repository :
+### 🔵 Scraping Sources
+
+- **CryptocurrencyJobs.co** - Leading crypto job board
+- **Web3.career** - 70,000+ jobs database
+- **CryptoJobsList** - Running since 2017
+- **Remote3** - Remote-first Web3 jobs
+- **CryptoJobs.com** - AI-powered job portal
+- **Crypto.Jobs** - Community of 4,000+ enthusiasts
+- **BeInCrypto Jobs** - Major crypto media job board
+- **JobStash** - Web3 job aggregator
+- **Crypto-Careers** - Enterprise-level crypto jobs
+- **Dragonfly Job Board** - VC portfolio companies
+- **Solana Job Board** - Solana ecosystem jobs
+- **Avalanche Job Board** - Avalanche ecosystem jobs
+- **Ethereum Job Board** - Ethereum-focused positions
+- **Midnight Network** - Cardano sidechain jobs
+- **Block (Square/Cash App)** - Fintech/crypto giant
+
+**Result: 2000+ jobs aggregated from 90+ companies via API + 15 job boards**
+
+## 🚀 Quick Start
+
+### Local Development
+
 ```bash
-git clone https://github.com/TON-USERNAME/web3-job-aggregator.git
-cd web3-job-aggregator
-```
-
-2. Installe les dépendances :
-```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the app
+python app.py
+
+# Open http://localhost:5000
 ```
 
-Ou avec pip3 :
-```bash
-pip3 install -r requirements.txt
+### Deploy to Render
+
+1. Push to GitHub
+2. Go to [render.com](https://render.com)
+3. New Web Service → Connect your repo
+4. Deploy!
+
+**Free tier works perfectly!**
+
+## 🔧 Configuration
+
+### Add More Greenhouse Companies
+
+Edit `job_aggregator.py`:
+```python
+self.greenhouse_companies = [
+    ('company-slug', 'Company Name'),
+    # Find the slug from: boards.greenhouse.io/{slug}
+]
 ```
 
-## 🚀 Utilisation
-
-### Mode Simple (Recommandé)
-
-Lance le script et suis les instructions :
-```bash
-python web3_job_aggregator.py
-```
-
-Ou avec python3 :
-```bash
-python3 web3_job_aggregator.py
-```
-
-**Exemple d'utilisation :**
-```
-Keywords: solidity, remote, developer
-
-⏳ Starting search...
-
-⏳ Fetching from Crypto Careers... ✅ 12 jobs
-⏳ Fetching from Web3 Career... ✅ 23 jobs
-⏳ Fetching from Cryptocurrency Jobs... ✅ 18 jobs
-...
-
-✨ TOTAL: 156 unique jobs found
-```
-
-### Mode Programmatique
-
-Utilise l'outil dans ton propre code Python :
+### Add More Lever Companies
 
 ```python
-from web3_job_aggregator import Web3JobAggregator
-
-# Créer une instance
-aggregator = Web3JobAggregator()
-
-# Rechercher des jobs avec filtres
-keywords = ['solidity', 'smart contract', 'remote']
-jobs = aggregator.search_all(keywords=keywords)
-
-# Afficher les résultats
-aggregator.display(limit=10)
-
-# Sauvegarder
-aggregator.save_json('mes_jobs.json')
-aggregator.save_markdown('mes_jobs.md')
-
-# Accéder aux jobs directement
-for job in aggregator.jobs:
-    print(f"{job['title']} at {job['company']}")
+self.lever_companies = [
+    ('company-slug', 'Company Name'),
+    # Find the slug from: jobs.lever.co/{slug}
+]
 ```
 
-## 📊 Format de sortie
+### Toggle Sources On/Off
 
-### JSON (`web3_jobs.json`)
-```json
-{
-  "total_jobs": 156,
-  "last_updated": "2026-02-04T10:30:00",
-  "jobs": [
-    {
-      "title": "Senior Solidity Developer",
-      "company": "Acme Protocol",
-      "location": "Remote",
-      "url": "https://web3.career/job/123",
-      "source": "Web3 Career",
-      "scraped_at": "2026-02-04T10:30:00"
+```python
+self.sources = {
+    'source_name': {
+        'enabled': True,  # Toggle here
+        'type': 'api'     # or 'scraping'
     }
-  ]
 }
 ```
 
-### Markdown (`web3_jobs.md`)
-Format lisible groupé par source avec tous les détails des offres.
+### Add More Languages
 
-## 🔧 Personnalisation
-
-### Méthode 1: Via config.py
-
-Édite `config.py` pour personnaliser :
-
+Edit `app.py` translations dict:
 ```python
-# Mots-clés par défaut
-DEFAULT_KEYWORDS = [
-    'rust',
-    'solana', 
-    'defi',
-    'smart contract'
-]
-
-# Désactiver certains job boards
-JOB_BOARDS = {
-    'crypto-careers': {
-        'enabled': True  # Change à False pour désactiver
-    },
+'es': {
+    'title': 'Web3 Jobs Pro',
+    'subtitle': 'Encuentra tu próximo trabajo en crypto',
     # ...
 }
 ```
 
-### Méthode 2: Ajouter un nouveau job board
+## 🏗️ Architecture
 
-Dans `web3_job_aggregator.py`, ajoute dans `self.job_boards` :
-
-```python
-'nouveau_site': {
-    'name': 'Nouveau Site',
-    'url': 'https://example.com/jobs',
-    'enabled': True
-}
+```
+web3-jobs-pro/
+├── app.py                  # Flask server + API endpoints
+├── job_aggregator.py       # Core aggregator (APIs + scraping)
+├── requirements.txt        # Python dependencies
+├── static/
+│   ├── css/style.css       # Cyberpunk-themed UI
+│   └── js/app.js           # Frontend logic
+└── templates/
+    └── index.html          # Main template (Jinja2)
 ```
 
-### Exemples de mots-clés utiles
-
-**Par rôle :**
-- `developer`, `engineer`, `architect`
-- `product manager`, `designer`, `marketing`
-- `analyst`, `researcher`, `writer`
-
-**Par techno :**
-- `solidity`, `rust`, `move`, `cairo`
-- `react`, `typescript`, `python`
-
-**Par domaine :**
-- `defi`, `nft`, `dao`, `gaming`
-- `layer 2`, `zkp`, `mev`, `staking`
-
-**Par type :**
-- `remote`, `full-time`, `contract`
-- `senior`, `junior`, `lead`
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! N'hésite pas à :
-- Ajouter de nouveaux job boards
-- Améliorer le scraping
-- Corriger des bugs
-- Proposer de nouvelles fonctionnalités
-
-## ⚠️ Notes importantes
-
-1. **Rate Limiting** : Le script inclut des délais entre les requêtes (1 seconde) pour être respectueux des serveurs.
-
-2. **Web Scraping Ethics** : Certains sites peuvent avoir des APIs officielles. Vérifie toujours les Terms of Service avant de scraper.
-
-3. **Maintenance** : Les structures HTML des sites peuvent changer. Le script nécessitera peut-être des ajustements réguliers.
-
-4. **APIs** : Pour une solution plus robuste, considère utiliser les APIs officielles quand elles sont disponibles :
-   - Certains job boards offrent des APIs
-   - Greenhouse API pour les entreprises qui l'utilisent
-   - Lever API, etc.
-
-## 🔮 Améliorations futures
-
-- [ ] Support API pour les sites qui en ont une
-- [ ] Base de données SQLite pour historique
-- [ ] Interface web avec Flask/FastAPI
-- [ ] Notifications email/Telegram pour nouvelles offres
-- [ ] Filtres avancés (salaire, expérience, etc.)
-- [ ] Déduplication automatique des offres
-- [ ] Scraping planifié (cron job)
+**Key Design Decisions:**
+- Greenhouse & Lever use their **official public JSON APIs** (no scraping needed, more reliable)
+- Scraping sources use **CSS selectors with fallback strategies** (not fragile regex)
+- **Parallel execution** with ThreadPoolExecutor (6 workers) for speed
+- **Smart deduplication** normalizes titles/companies before comparison
+- **Background search** with polling to avoid HTTP timeouts
 
 ## 📝 License
 
-MIT License - Fais-en ce que tu veux !
+MIT License - Use it however you want!
 
-## 🙏 Remerciements
+## 🙏 Credits
 
-Merci aux job boards Web3 qui rendent l'information accessible !
+Built by [@_Gazettebale](https://twitter.com/_Gazettebale) for the Web3 community
 
 ---
 
-**Happy job hunting! 🎯**
-
-Pour des questions ou suggestions : ouvre une issue sur GitHub
+**Star ⭐ this repo if you find it useful!**

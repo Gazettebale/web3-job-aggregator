@@ -652,7 +652,7 @@ class Web3JobsPro:
         keywords_lower = [k.lower() for k in keywords]
         for job in jobs:
             text = f"{job.get('title', '')} {job.get('company', '')} {job.get('location', '')} {job.get('team', '')}".lower()
-            if any(kw in text for kw in keywords_lower):
+            if all(kw in text for kw in keywords_lower):
                 filtered.append(job)
         return filtered
 

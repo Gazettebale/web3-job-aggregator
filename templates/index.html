@@ -15,10 +15,22 @@
 
     <div class="container">
         <header>
-            <div class="header-badge">90+ companies via API · {{ t.api_powered }}</div>
+            <div class="header-badge">15+ {{ t.sources }} · {{ t.api_powered }}</div>
             <h1>{{ t.title }}</h1>
             <p class="subtitle">{{ t.subtitle }}</p>
         </header>
+
+        <!-- FAVORITES SECTION -->
+        <div id="favoritesSection" class="favorites-section" style="display:none;">
+            <div class="favorites-header">
+                <h2>⭐ {{ t.favorites_title }} <span class="fav-count" id="favCount">0</span></h2>
+                <div class="favorites-actions">
+                    <button class="fav-export-btn" onclick="exportFavorites()">📥 {{ t.export }}</button>
+                    <button class="fav-clear-btn" onclick="clearAllFavorites()">🗑 {{ t.clear_all }}</button>
+                </div>
+            </div>
+            <div id="favoritesList" class="favorites-list"></div>
+        </div>
 
         <div class="search-section">
             <div class="search-box">
@@ -160,7 +172,7 @@
 
         <footer>
             <p>{{ t.footer }}</p>
-            <p>{{ t.powered_by }} <a href="https://twitter.com/_Gazettebale" target="_blank">@_Gazettebale</a> · <a href="https://github.com/Gazettebale/web3-jobs-pro" target="_blank">GitHub</a></p>
+            <p>{{ t.powered_by }} <a href="https://twitter.com/_Gazettebale" target="_blank">@_Gazettebale</a> · <a href="https://github.com/Gazettebale/web3-job-aggregator" target="_blank">GitHub</a></p>
         </footer>
     </div>
 

@@ -34,6 +34,9 @@ translations = {
         'sources': 'sources scanned',
         'api_powered': 'API-powered',
         'powered_by': 'Built by',
+        'favorites_title': 'My Favorites',
+        'confirm_clear_favs': 'Remove all favorites?',
+        'no_favorites': 'No favorites to export',
     },
     'fr': {
         'title': 'Web3 Jobs Pro',
@@ -58,6 +61,9 @@ translations = {
         'sources': 'sources scannées',
         'api_powered': 'Propulsé par API',
         'powered_by': 'Créé par',
+        'favorites_title': 'Mes Favoris',
+        'confirm_clear_favs': 'Supprimer tous les favoris ?',
+        'no_favorites': 'Aucun favori à exporter',
     }
 }
 

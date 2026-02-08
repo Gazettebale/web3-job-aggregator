@@ -1,6 +1,124 @@
 let currentJobs = [];
 let selectedKeywords = new Set();
 let searchInterval = null;
+let favorites = JSON.parse(localStorage.getItem('web3_favorites') || '[]');
+let lastSources = {};
+
+// ============================================================
+//  FAVORITES SYSTEM
+// ============================================================
+
+function getFavoriteKey(job) {
+    return `${job.title}|${job.company}|${job.source}`;
+}
+
+function isFavorite(job) {
+    const key = getFavoriteKey(job);
+    return favorites.some(f => getFavoriteKey(f) === key);
+}
+
+function toggleFavorite(job) {
+    const key = getFavoriteKey(job);
+    const index = favorites.findIndex(f => getFavoriteKey(f) === key);
+    
+    if (index >= 0) {
+        favorites.splice(index, 1);
+    } else {
+        favorites.push({...job, favorited_at: new Date().toISOString()});
+    }
+    
+    localStorage.setItem('web3_favorites', JSON.stringify(favorites));
+    updateFavoritesDisplay();
+    
+    // Update star buttons in job list
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+        const btnKey = btn.getAttribute('data-key');
+        if (btnKey === key) {
+            btn.classList.toggle('active');
+            btn.textContent = btn.classList.contains('active') ? '★' : '☆';
+        }
+    });
+}
+
+function removeFavorite(index) {
+    favorites.splice(index, 1);
+    localStorage.setItem('web3_favorites', JSON.stringify(favorites));
+    updateFavoritesDisplay();
+    if (currentJobs.length > 0) {
+        displayJobs(currentJobs, lastSources);
+    }
+}
+
+function clearAllFavorites() {
+    if (!confirm(translations.confirm_clear_favs || 'Remove all favorites?')) return;
+    favorites = [];
+    localStorage.setItem('web3_favorites', JSON.stringify(favorites));
+    updateFavoritesDisplay();
+    if (currentJobs.length > 0) {
+        displayJobs(currentJobs, lastSources);
+    }
+}
+
+function exportFavorites() {
+    if (favorites.length === 0) {
+        alert(translations.no_favorites || 'No favorites to export');
+        return;
+    }
+    const dataStr = JSON.stringify({
+        total: favorites.length,
+        exported_at: new Date().toISOString(),
+        favorites: favorites
+    }, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `web3_favorites_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+function updateFavoritesDisplay() {
+    const container = document.getElementById('favoritesSection');
+    const list = document.getElementById('favoritesList');
+    const count = document.getElementById('favCount');
+    
+    if (!container) return;
+    
+    if (favorites.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'block';
+    count.textContent = favorites.length;
+    list.innerHTML = '';
+    
+    favorites.forEach((job, index) => {
+        const card = document.createElement('div');
+        card.className = 'fav-card';
+        
+        const isApi = job.source && (job.source.includes('Greenhouse') || job.source.includes('Lever'));
+        
+        card.innerHTML = `
+            <div class="fav-card-header">
+                <h4 class="fav-title">${escapeHtml(job.title)}</h4>
+                <button class="fav-remove" onclick="removeFavorite(${index})" title="Remove">×</button>
+            </div>
+            <div class="fav-details">
+                ${job.company ? `<span>🏢 ${escapeHtml(job.company)}</span>` : ''}
+                ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
+                <span class="job-source ${isApi ? 'api-source' : ''}">${escapeHtml(job.source)}${isApi ? ' ⚡' : ''}</span>
+            </div>
+            ${job.url ? `<a href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer" class="job-link">${translations.view_job || 'View Job'} →</a>` : ''}
+        `;
+        list.appendChild(card);
+    });
+}
+
+// ============================================================
+//  KEYWORDS SYSTEM
+// ============================================================
 
 function toggleKeyword(keyword) {
     if (selectedKeywords.has(keyword)) {
@@ -65,18 +183,20 @@ function clearKeywords() {
     updateKeywordInput();
 }
 
+// ============================================================
+//  SEARCH
+// ============================================================
+
 async function searchJobs(searchAll = false) {
     const keywordArray = searchAll ? [] : Array.from(selectedKeywords);
     
     if (!searchAll && keywordArray.length === 0) {
-        // Flash the search all button
         const btn = document.getElementById('searchAllBtn');
         btn.classList.add('pulse');
         setTimeout(() => btn.classList.remove('pulse'), 1000);
         return;
     }
     
-    // UI updates
     document.getElementById('loading').style.display = 'block';
     document.getElementById('results').style.display = 'none';
     document.getElementById('empty').style.display = 'none';
@@ -108,7 +228,7 @@ async function searchJobs(searchAll = false) {
 
 function pollResults(searchId) {
     let attempts = 0;
-    const maxAttempts = 300; // 5 minutes
+    const maxAttempts = 300;
     
     const scanMessages = [
         'Scanning Greenhouse API...',
@@ -136,6 +256,7 @@ function pollResults(searchId) {
             if (data.status === 'completed') {
                 clearInterval(searchInterval);
                 currentJobs = data.jobs;
+                lastSources = data.sources || {};
                 displayJobs(data.jobs, data.sources || {});
                 resetUI();
             } else if (data.status === 'error') {
@@ -168,11 +289,15 @@ function resetUI() {
     document.getElementById('loading').style.display = 'none';
 }
 
+// ============================================================
+//  DISPLAY
+// ============================================================
+
 function displayJobs(jobs, sources) {
     document.getElementById('results').style.display = 'block';
     document.getElementById('jobCount').textContent = jobs.length;
+    lastSources = sources;
     
-    // Display source stats
     const statsContainer = document.getElementById('sourceStats');
     if (sources && Object.keys(sources).length > 0) {
         const badges = Object.entries(sources)
@@ -206,11 +331,16 @@ function createJobCard(job) {
     const company = job.company || '';
     const location = job.location || '';
     const isApi = job.source && (job.source.includes('Greenhouse') || job.source.includes('Lever'));
+    const faved = isFavorite(job);
+    const favKey = getFavoriteKey(job);
     
     card.innerHTML = `
         <div class="job-header">
             <h3 class="job-title">${escapeHtml(job.title)}</h3>
-            <span class="job-source ${isApi ? 'api-source' : ''}">${escapeHtml(job.source)}${isApi ? ' ⚡' : ''}</span>
+            <div class="job-header-actions">
+                <button class="fav-btn ${faved ? 'active' : ''}" data-key="${escapeHtml(favKey)}" title="${faved ? 'Remove from favorites' : 'Add to favorites'}">${faved ? '★' : '☆'}</button>
+                <span class="job-source ${isApi ? 'api-source' : ''}">${escapeHtml(job.source)}${isApi ? ' ⚡' : ''}</span>
+            </div>
         </div>
         <div class="job-details">
             ${company ? `<span>🏢 ${escapeHtml(company)}</span>` : ''}
@@ -218,6 +348,13 @@ function createJobCard(job) {
         </div>
         ${job.url ? `<a href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer" class="job-link">${translations.view_job || 'View Job'} →</a>` : ''}
     `;
+    
+    const favBtn = card.querySelector('.fav-btn');
+    favBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(job);
+    });
     
     return card;
 }
@@ -250,13 +387,17 @@ function exportResults() {
     URL.revokeObjectURL(url);
 }
 
-// Keyboard shortcuts
+// ============================================================
+//  INIT
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('keywords').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             searchJobs(selectedKeywords.size === 0);
         }
     });
+    updateFavoritesDisplay();
 });
 
 window.addEventListener('beforeunload', function() {

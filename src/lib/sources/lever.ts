@@ -1,25 +1,11 @@
 import { Job } from '../types'
 
+// Only confirmed working slugs (verified against Lever API)
 const LEVER_COMPANIES = [
-  // Exchanges & Custodians
-  'crypto-com', 'binance', 'gemini', 'bitfinex', 'okx',
-  // Infra & Dev Tools
-  'alchemy', 'infura', 'thegraph', 'walletconnect', 'magic-labs',
-  'tenderly', 'openzeppelin', 'hardhat',
-  // DeFi protocols
-  'uniswap', 'aave', 'synthetix', 'polymarket', 'across-protocol',
-  'gnosis', 'safe-global', 'superfluid', 'ribbon-finance',
-  // L1 / L2 ecosystems
-  'polygon', 'aztec-network', 'starkware', 'zksync',
-  'ethereum-foundation', 'solana-foundation', 'chainlink-labs',
-  // Wallets & UX
-  'phantom-labs', 'zerion', 'zapper', 'rainbow-wallet', 'argent', 'sequence',
-  // Data & Analytics
-  'nansen', 'messari', 'dune-analytics', 'chainalysis',
-  // Gaming & NFT
-  'animoca-brands', 'immutable',
-  // Other
-  'galxe', 'layer3', 'flashbots', 'certik',
+  'binance',   // Binance
+  'zerion',    // Zerion
+  'immutable', // Immutable
+  '1inch',     // 1inch Network
 ]
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000

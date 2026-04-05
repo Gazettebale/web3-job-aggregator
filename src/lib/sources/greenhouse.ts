@@ -1,21 +1,17 @@
 import { Job } from '../types'
 
+// Only confirmed working slugs (verified against Greenhouse API)
 const GREENHOUSE_COMPANIES = [
-  // Tier 1 — exchanges & custodians
-  'coinbase', 'kraken', 'gemini', 'bitgo', 'anchorage', 'bullish',
-  // Compliance & security
-  'fireblocks', 'chainalysis', 'elliptic', 'certik',
-  // Infra & tools
-  'alchemy', 'infura', 'consensys', 'ledger',
-  // DeFi & protocols
-  'uniswap', 'aave', 'dydx', 'paradigm', 'opensea',
-  'circle', 'paxos', 'blockchain-com',
-  // L2s
-  'arbitrum', 'optimism', 'starkware', 'zksync', 'scroll', 'linea',
-  // New L1s
-  'mystenlabs', 'aptoslabs', 'near', 'celestia', 'eigenlayer',
-  // Consumer
-  'worldcoin', 'robinhood', 'immutablex', 'sky-mavis', 'dapper-labs',
+  'coinbase',       // Coinbase
+  'gemini',         // Gemini
+  'bitgo',          // BitGo
+  'fireblocks',     // Fireblocks
+  'consensys',      // ConsenSys
+  'paradigm',       // Paradigm
+  'aptoslabs',      // Aptos Labs
+  'robinhood',      // Robinhood
+  'figment',        // Figment
+  'blockchain-com', // Blockchain.com
 ]
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000

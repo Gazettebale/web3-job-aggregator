@@ -1,16 +1,24 @@
 import { Job } from '../types'
 
-// Top 40 web3 companies on Greenhouse
 const GREENHOUSE_COMPANIES = [
-  'coinbase', 'kraken', 'blockchain-com', 'fireblocks', 'chainalysis',
-  'ledger', 'bitgo', 'circle', 'paxos', 'uniswap', 'paradigm',
-  'consensys', 'opensea', 'dydx', 'aave', 'arbitrum', 'optimism',
-  'celestia', 'eigenlayer', 'starkware', 'mystenlabs', 'aptoslabs',
-  'aptos-labs', 'robinhood', 'gemini', 'anchorage', 'bullish',
-  'worldcoin', 'alchemy', 'infura', 'zksync', 'scroll',
-  'base', 'linea', 'immutablex', 'axie-infinity', 'sky-mavis',
-  'dapper-labs', 'flow-blockchain', 'near', 'near-protocol',
+  // Tier 1 — exchanges & custodians
+  'coinbase', 'kraken', 'gemini', 'bitgo', 'anchorage', 'bullish',
+  // Compliance & security
+  'fireblocks', 'chainalysis', 'elliptic', 'certik',
+  // Infra & tools
+  'alchemy', 'infura', 'consensys', 'ledger',
+  // DeFi & protocols
+  'uniswap', 'aave', 'dydx', 'paradigm', 'opensea',
+  'circle', 'paxos', 'blockchain-com',
+  // L2s
+  'arbitrum', 'optimism', 'starkware', 'zksync', 'scroll', 'linea',
+  // New L1s
+  'mystenlabs', 'aptoslabs', 'near', 'celestia', 'eigenlayer',
+  // Consumer
+  'worldcoin', 'robinhood', 'immutablex', 'sky-mavis', 'dapper-labs',
 ]
+
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000
 
 function extractTags(job: Record<string, unknown>): string[] {
   const tags: string[] = []
@@ -72,7 +80,14 @@ export async function fetchGreenhouseJobs(): Promise<Job[]> {
       )
       if (!res.ok) return []
       const data = await res.json() as { jobs?: Record<string, unknown>[]; meta?: { name?: string } }
-      return (data.jobs || []).slice(0, 20).map((job) => {
+      const cutoff = Date.now() - ONE_YEAR_MS
+      return (data.jobs || [])
+        .filter((job) => {
+          const updated = job.updated_at as string | undefined
+          return !updated || new Date(updated).getTime() > cutoff
+        })
+        .slice(0, 30)
+        .map((job) => {
         const location = job.location as { name?: string } | undefined
         return {
           id: `gh-${job.id}`,

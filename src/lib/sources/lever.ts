@@ -1,16 +1,28 @@
 import { Job } from '../types'
 
 const LEVER_COMPANIES = [
-  'crypto-com', 'binance', 'animoca-brands', 'certik', 'polygon',
-  'chainlink-labs', 'ethereum-foundation', 'solana-foundation',
-  'alchemy', 'thegraph', 'phantom-labs', 'walletconnect',
-  'magic-labs', 'nansen', 'messari', 'dune-analytics',
-  'flashbots', 'aztec-network', 'polymarket', 'synthetix',
-  'ribbon-finance', 'across-protocol', 'hop-protocol',
-  'request-network', 'superfluid', 'gnosis', 'safe-global',
-  'galxe', 'layer3', 'rabbithole', 'zapper', 'zerion',
-  'metamask', 'rainbow-wallet', 'argent', 'sequence',
+  // Exchanges & Custodians
+  'crypto-com', 'binance', 'gemini', 'bitfinex', 'okx',
+  // Infra & Dev Tools
+  'alchemy', 'infura', 'thegraph', 'walletconnect', 'magic-labs',
+  'tenderly', 'openzeppelin', 'hardhat',
+  // DeFi protocols
+  'uniswap', 'aave', 'synthetix', 'polymarket', 'across-protocol',
+  'gnosis', 'safe-global', 'superfluid', 'ribbon-finance',
+  // L1 / L2 ecosystems
+  'polygon', 'aztec-network', 'starkware', 'zksync',
+  'ethereum-foundation', 'solana-foundation', 'chainlink-labs',
+  // Wallets & UX
+  'phantom-labs', 'zerion', 'zapper', 'rainbow-wallet', 'argent', 'sequence',
+  // Data & Analytics
+  'nansen', 'messari', 'dune-analytics', 'chainalysis',
+  // Gaming & NFT
+  'animoca-brands', 'immutable',
+  // Other
+  'galxe', 'layer3', 'flashbots', 'certik',
 ]
+
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000
 
 interface LeverPosting {
   id: string
@@ -74,7 +86,11 @@ export async function fetchLeverJobs(): Promise<Job[]> {
       )
       if (!res.ok) return []
       const data = await res.json() as LeverPosting[]
-      return (Array.isArray(data) ? data : []).slice(0, 20).map((posting) => ({
+      const cutoff = Date.now() - ONE_YEAR_MS
+      return (Array.isArray(data) ? data : [])
+        .filter(p => !p.createdAt || p.createdAt > cutoff)
+        .slice(0, 30)
+        .map((posting) => ({
         id: `lv-${posting.id}`,
         title: posting.text || '',
         company: posting.company || slug.replace(/-/g, ' '),

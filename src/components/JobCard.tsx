@@ -1,3 +1,4 @@
+'use client'
 import { Job } from '@/lib/types'
 import { timeAgo } from '@/lib/utils'
 

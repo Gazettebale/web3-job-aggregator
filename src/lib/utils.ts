@@ -2,7 +2,8 @@ export function generateId(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50)
 }
 
-export function normalizeText(str: string): string {
+export function normalizeText(str: string | null | undefined): string {
+  if (!str) return ''
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
@@ -20,13 +21,16 @@ export function filterItems<T extends { title: string; tags: string[] }>(
   search: string,
   tags: string[]
 ): T[] {
+  if (!Array.isArray(items)) return []
   return items.filter(item => {
+    if (!item) return false
+    const itemTags = Array.isArray(item.tags) ? item.tags.filter(Boolean) : []
     const searchMatch = !search ||
       normalizeText(item.title).includes(normalizeText(search)) ||
-      item.tags.some(tag => normalizeText(tag).includes(normalizeText(search)))
+      itemTags.some(tag => normalizeText(tag).includes(normalizeText(search)))
 
     const tagMatch = tags.length === 0 ||
-      tags.every(tag => item.tags.some(t => matchesFilter(t, tag)))
+      tags.every(tag => itemTags.some(t => matchesFilter(t, tag)))
 
     return searchMatch && tagMatch
   })

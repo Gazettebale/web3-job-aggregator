@@ -1,3 +1,4 @@
+'use client'
 import { Hackathon } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 

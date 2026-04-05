@@ -19,10 +19,11 @@ export async function GET() {
   // Deduplicate by title + company
   const seen = new Set<string>()
   const deduped = jobs.filter(job => {
-    const key = `${job.title.toLowerCase()}|${job.company.toLowerCase()}`
+    if (!job?.title || !job?.url) return false
+    const key = `${job.title.toLowerCase()}|${(job.company || '').toLowerCase()}`
     if (seen.has(key)) return false
     seen.add(key)
-    return job.title && job.url
+    return true
   })
 
   return NextResponse.json({

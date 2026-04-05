@@ -1,3 +1,4 @@
+'use client'
 import { BugBounty } from '@/lib/types'
 
 interface Props {

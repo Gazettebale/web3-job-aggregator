@@ -1,3 +1,4 @@
+'use client'
 import { Grant } from '@/lib/types'
 
 interface Props {

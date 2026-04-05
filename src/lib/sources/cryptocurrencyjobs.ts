@@ -12,7 +12,7 @@ interface AlgoliaHit {
   company?: { name?: string; url?: string }
   permalink?: string
   remoteLocation?: { name?: string }
-  onsiteLocation?: string
+  onsiteLocation?: string | Record<string, string>
   locationFilter?: string[]
   keywords?: Array<{ name: string }>
   employmentTypes?: Array<{ name: string }>
@@ -56,14 +56,22 @@ function mapHitToJob(hit: AlgoliaHit): Job {
   const isRemote = (hit.locationFilter || []).some(l => l.toLowerCase().includes('remote'))
   if (isRemote) tags.push('Remote')
 
-  const location = hit.remoteLocation?.name || hit.onsiteLocation ||
-    (hit.locationFilter || []).find(l => !l.includes('/')) || 'Remote'
+  // onsiteLocation can be an object {city, country} or a string depending on the listing
+  const rawOnsite = hit.onsiteLocation
+  const onsiteStr = typeof rawOnsite === 'string'
+    ? rawOnsite
+    : rawOnsite && typeof rawOnsite === 'object'
+      ? ((rawOnsite as Record<string, string>).city || (rawOnsite as Record<string, string>).name || '')
+      : ''
+  const location = hit.remoteLocation?.name || onsiteStr ||
+    (hit.locationFilter || []).find(l => typeof l === 'string' && !l.includes('/')) ||
+    'Remote'
 
   return {
     id: `ccj-${hit.objectID}`,
-    title: hit.title,
-    company: hit.company?.name || 'Unknown',
-    location,
+    title: String(hit.title || ''),
+    company: String(hit.company?.name || 'Unknown'),
+    location: String(location),
     url: hit.permalink ? `https://cryptocurrencyjobs.co${hit.permalink}` : 'https://cryptocurrencyjobs.co',
     source: 'CryptocurrencyJobs',
     tags: [...new Set(tags)],
